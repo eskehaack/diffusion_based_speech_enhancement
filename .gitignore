@@ -338,4 +338,4 @@ $RECYCLE.BIN/
 *.ps1
 
 # Data set
-data/*
+tiny-diffusion-model/data/*
