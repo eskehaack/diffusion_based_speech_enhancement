@@ -1,0 +1,187 @@
+\documentclass[a4paper, 12pt]{olplainarticle}
+% Use option lineno for line numbers 
+
+\title{Toward Real-Time Speech Enhancement with Scalable Diffusion Models}
+
+\author[1]{Eske Haack - s214643}
+
+\keywords{Diffusion, Speech Enhancement, Tiny-ML}
+
+\begin{abstract}
+Please provide an abstract of no more than 300 words. Your abstract should explain the main contributions of your article, and should not contain any material that is not included in the main text. 
+\end{abstract}
+
+\begin{document}
+
+\flushbottom
+\maketitle 
+\thispagestyle{empty} 
+
+\section*{Introduction}
+
+The field of speech enhancement and speech recognition has been around since the 1930's, and are today a wide-spread part of society \citep{speech-history}. 
+Initially, the models were simple, focusing on specific sounds. 
+Later, models have become more advanced, allowing for faster and clearer automatic speech enhancement. 
+In today's world the field of speech enhancement has evolved enough to allow automatic and dynamic methods, 
+such as machine learning, to enter the stage as a viable method for cleaning noisy signals and improving speech \citep{tommy-base-paper}.
+
+A newfound popular approach to speech enhancement is to use generative, 
+diffusion-based models to iteratively remove noise from signals \citep{tommy-base-paper}. 
+This approach does, however, come with certain caveats, as diffusion-based models often are large and heavy to run. 
+The long inference-times do not allow for online speech enhancement and thus, even considering the better performance, 
+the models are of little use to technologies like hearing-aids etc \citep{tommy-base-paper}.
+
+To mitigate this performance-issue, this project aims to introduce a "tiny" version of the diffusion process, 
+which features a reduced parameter space and thus a faster inference. 
+With this, we aim to compare a "tiny-diffusion" model with current, non-trainable, 
+state-of-the-art methods for speech enhancement.
+ 
+\section*{Diffusion models}
+
+\textit{Diffusion; the state of being spread out or transmitted especially by contact.} \citep{dictionary-diffusion}.
+
+\subsection*{The forward process}
+
+Diffusion describes the process of a substance spreading, often uniformly, in a space. 
+From a machine learning perspective, this is also the case. 
+The diffusion-based models will, in their training process, take an input and slowly diffuse it i.e. spread it uniformly across a space.
+Logically, if the model can learn what happens to data as it is slowly diffused, then it can learn how diffused data might have looked in its original state.
+This will allow the model to observe a noisy data point and estimate the non-noisy equivalent.
+
+In technical terms the diffusion process is an iterative process in which Gaussian noise is added to the input until it resembles a fully Gaussian sample.
+It is additionally desired to have a controller/scheduler for the noising process, such that noises can be added in different levels throughout the process.
+This will also allow us to control the variance of the output.
+Let $X_t$ be the input data at time-step $t$ and $\beta$ be the noise schedule. A simple form of the forward diffusion process can then be described as \citep{intro-diffusion-process} (\cite{ml-book} eq. 19.57):
+\begin{equation} \label{eq:basic-diffusion}
+    X_t = \sqrt{1-\beta_t} X_{t-1} + \sqrt{\beta_t} \epsilon_t, \quad \epsilon_t \sim \mathcal{N}(0,I)
+\end{equation}
+This is the form used in the DDPM paper \citep{ddpm}.
+A different way of describing this function is using a kernel, this will allow us to describe the probabilistic relation in the function.
+\begin{equation} \label{eq:markov-diffusion}
+    q(X_t|X_{t-1}) = K(X_t | X_{t-1}, \beta_t)
+\end{equation}
+Where $q$ describes the probability of $X_t$ given $X_{t-1}$ and $K$ is the kernel describing the function from \cref{eq:basic-diffusion}.
+The avid reader might realize, at this point, that the forward diffusion process can be described as a markov-chain, 
+since an input at given time is only dependant on the previous iteration.
+Using the rules of the markov chains we can rewrite \cref{eq:basic-diffusion} and \cref{eq:markov-diffusion} to directly infer the noisy data at time $T$ from the first time-step (\cite{ml-book} eq. 19.56):
+\begin{equation}
+    q(X_{1:T}| X_0) = \prod_{t=1}^{T}q(X_t|X_{t-1})
+\end{equation}
+To illustrate the markov chain diffusion process \cref{fig:diffusion-process} shows the output of 100 trails running the diffusion process with $x_0 = 10$ and $\beta = 0.5$ for 100 time-steps.
+In the figure, we see a clear starting point at $X = 20$, from which the sample values are reduced and end with a mean at app. zero and a variance of app. one.
+From this the diffusion effect is apparent. The original distribution of values can be described with a dirac-delta function with mean 20 while the output function is approximately a standard Gaussian.
+This means, that not only is the variance heightened, the mean is shifted (or drifted) to fit the noise distribution.
+This example is only one-dimensional, but the same effect applies to data of higher dimensionality like audio-signals or images.
+\begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.5\linewidth]{figures/simple_diffusion.png}
+    \caption{Simple one-dimensional diffusion process using $n=100$ trials of diffusion with starting parameter $x_0 = 10$ and $\beta = 0.5$.}
+    \label{fig:diffusion-process}
+\end{figure}
+
+\subsection*{The reverse process - Denoising}
+
+So far, we have only discussed the forward process, i.e. the process of adding noise to data. 
+While it might be cool to watch an image or a sound signal disappear into a meaningless mumbo jumbo of Gaussian noise it is not the most useful tool.
+The true power of diffusion lies, in the ability to reverse the process. Train a neural network to estimate a less noisy version of a data point.
+This way, the model would be able to create clear data from pure noise, or at least clean noise away from noisy data.
+
+Denoising is, however, a complicated process \citep{intro-diffusion-process}. Looking at it from a Bayesian point of view we should be able to model the reverse process as:
+\begin{equation} \label{eq:denoising-bayes}
+    q(X_{t-1}|X_t) = \frac{q(X_t|X_{t-1}) q(X_{t-1})}{q(X_t)}
+\end{equation}
+While this might seem simple, it will require us to know the distribution, $q(X_0)$, i.e. the distribution of the original data point.
+As there are no evidence suggesting the parameters of this distribution, let alone its type, there is no good way of using the model from \cref{eq:denoising-bayes}.
+This is where the machine learning part of diffusion models come into play. 
+Instead of solving the reverse process analytically, we can train a model to estimate the parameters of the added Gaussian noise in each step.
+As we know from the forward process, only Gaussian noise was added, and thus we can estimate the noise parameters without knowing the distribution of the original data point.
+Mathematically speaking, this method can be modelled as below (\cite{ml-book} eq. 19.61):
+\begin{equation}
+    p(X_{t-1}|X_t) = \mathcal{N}(X_{t-1}|\mu(X_t,t), \Sigma(X_t, t))
+\end{equation}
+And the full process as (\cite{ml-book} eq. 19.60):
+\begin{equation}
+    p(X_{0:T}) = p(X_T)\prod_{t=1}^{T}p(X_{t-1}|X_t)
+\end{equation}
+Where $p(X_{t-1}|X_t)$ describes the noise added in individual steps. 
+Running this process for long enough will theoretically remove all noise from the original data and leave a clean sample.
+
+\subsection*{Training}
+
+We now know how the both the forward and reverse diffusion processes go, but how does that relate to a machine learning perspective.
+How can we, in practice, train a model to learn the reverse diffusion?
+For this we can steal a page from the book of Variational Autoencoders, namely the ELBO-loss function.
+The ELBO (Evidence Lower-Bound) loss function maximizes the log likelihood of a certain sample stemming from a certain distribution.
+In this case, we use it to evaluate the predicted noise from each diffusion step by comparing it to the actual distribution from the forward process.
+The ELBO, $\log p_{\theta}(X_0)$, can, in this case, be expressed as: (\cite{intro-diffusion-process})
+\begin{equation}
+    \log p_{\theta}(X_0) \geq \mathbb{E}_{q(X_{1:T}|X_0)}\left[ \log \frac{p(X_T) \prod_{t=1}^{T} p_{\theta}(X_{t-1}|X_t)}{\prod_{t=1}^{T} q(X_t|X_{t-1})} \right]
+\end{equation}
+In which $\theta$ describes the parameter space for the model.
+From here we would like to split out the terms that affect either $X_0$ or $X_T$ (remember that $\log(a \cdot b) = \log a + \log b$):
+\begin{align}
+    \log p_{\theta}(X_0) \geq& \mathbb{E}_{q(X_{1:T}|X_0)}\left[ \log p(X_T) + \log \prod_{t=1}^{T}p_{\theta}(X_{t-1}|X_t) - \log \prod_{t=1}^{T} q(X_t|X_{t-1}) \right]\\
+    \log p_{\theta}(X_0) \geq&\mathbb{E}_{q(X_{1:T}|X_0)} [\log p_{\theta}(X_0|X_1)] + \\
+    &\quad \mathbb{E}_{q(X_{1:T}|X_0)}\left[ \log p(X_T) + \log \prod_{t=2}^{T}p_{\theta}(X_{t-1}|X_t) - \log \prod_{t=1}^{T} q(X_t|X_{t-1}) \right]\\
+    \log p_{\theta}(X_0) \geq&\mathbb{E}_{q(X_{1:T}|X_0)} \left[ \log \frac{p(X_T)}{q(X_T|X_{T-1})} \right] + \mathbb{E}_{q(X_{1:T}|X_0)} [\log p_{\theta}(X_0|X_1)] +\\
+    &\quad \mathbb{E}_{q(X_{1:T}|X_0)}\left[ \log \prod_{t=2}^{T}p_{\theta}(X_{t-1}|X_t) - \log \prod_{t=1}^{T-1} q(X_t|X_{t-1}) \right]
+\end{align}
+This will allow us to write up the final expression which can also be found as eq. 19.64 in \cite{ml-book} (and with a longer derivation in \cite{intro-diffusion-process}):
+\begin{align}
+    \log p_{\theta}(X_0) \geq &\underbrace{\mathbb{E}_{q(X_{1}|X_0)} [\log p_{\theta}(X_0|X_1)]}_{\text{reconstruction term}} +\\
+    &\underbrace{\mathbb{E}_{q(X_{T-1:T}|X_0)} \left[ \log \frac{p(X_T)}{q(X_T|X_{0})} \right]}_{\text{prior-matching term}} + \\
+    &\underbrace{\sum_{t=2}^{T}\mathbb{E}_{q(X_{t}|X_0)}\left[\frac{p_{\theta}(X_{t-1}|X_{t})}{q(X_{t-1}|X_{t})} \right]}_{\text{step-wise denoising term}}
+\end{align}
+Let us for now focus on the denoising term, as this is what we wish to evaluate in the model training.
+First of all, we will rewrite the term to a KL-divergence explicitly:
+\begin{equation} \label{eq:kl-divergence}
+    \sum_{t=2}^{T}\mathbb{E}_{q(X_{t:t}|X_0)}\left[\frac{p_{\theta}(X_{t-1}|X_{t})}{q(X_{t-1}|X_{t})} \right] = - \sum_{t=2}^{T}\mathbb{E}_{q(X_{t:t}|X_0)} \left[ \text{KL} (q(X_{t-1}|X_{t}) || p_{\theta}(X_{t-1}|X_{t})) \right]
+\end{equation}
+Of course, the distribution for the noising term, $p_{\theta}(X_{t-1}|X_{t})$, is already known as we choose this distribution ourselves. 
+We are then interested in determining the denoising term, $q(X_{t-1}|X_{t})$.
+First we will use our knowledge of markovian processes to determine that:
+\begin{equation}
+    q(X_{t-1}|X_{t}) = q(X_{t-1}|X_{t}, X_0)
+\end{equation}
+From here we can use Bayes theorem to calculate the actual distribution.
+\begin{equation} \label{eq:bayes-diffusion-denoising}
+    q(X_{t-1}|X_{t}, X_0) = \frac{q(X_{t-1}|X_0)q(X_t|X_{t-1,X_0})}{q(X_t|X_0)}
+\end{equation}
+To write this out, we will introduce a new term: $\alpha_t$ which will describe the reverse noise schedule (the denoising schedule) and will be defined as: $\alpha_t = 1- \beta_t$.
+
+Additionally we will define $\bar{\alpha}_t = \prod_{t=1}^{T} \alpha_t$.
+
+As all parts of \cref{eq:bayes-diffusion-denoising} are known we will simply write the following:
+\begin{align}
+    q(X_t|X_0) =& \mathcal{N}(X_t| \sqrt{\bar{\alpha}}X_0, (1-\bar{\alpha}\mathbf{I})) \\
+    q(X_{t-1}|X_0) =& \mathcal{N}(X_t| \sqrt{\bar{\alpha}_{t-1}}X_0, (1-\bar{\alpha}_{t-1})\mathbf{I})\\
+    q(X_t|X_{t-1,X_0}) =& \mathcal{N}(X_t| \sqrt{1-\beta_t}X_{t-1}, \beta_t \mathbf{I})
+\end{align}
+Which finally allows us to determine the parameters of the estimated distribution as:
+\begin{equation} \label{eq:forward-process-distribution}
+    q(X_{t-1}|X_{t}, X_0) = \mathcal{N}(X_{t-1}| \tilde{\mu}_t(X_t, X_0), \tilde{\beta}_t \mathbf{I})
+\end{equation}
+Where:
+\begin{equation*}
+    \tilde{\mu}_t(X_t, X_0) = \frac{\sqrt{\bar{\alpha}_{t-1}}\beta_t}{1-\bar{\alpha}_t}X_0 + \frac{\sqrt{\alpha_t}(1-\bar{\alpha}_{t-1})}{1-\bar{\alpha}_t}X_t, \quad \tilde{\beta}_t = \frac{1-\bar{\alpha}_{t-1}}{1-\bar{\alpha}_t}\beta_t
+\end{equation*}
+This concludes the derivation of the forward process distribution. 
+The last bit will show, how we use that to base our model (the $p_{\theta}$-distribution).
+
+Obviously, we would want to chose a distribution, which is as close to the target distribution as possible.
+From \cref{eq:forward-process-distribution} we know that the covariance matrix of the target distribution (defined as $\tilde{\beta}_t \mathbf{I}$) is easily computable, while the mean is still unknown for the denoising process. 
+We therefor pick a model with variance $\tilde{\beta}_t \mathbf{I}$ and the following mean:
+\begin{equation} \label{eq:estimated-mean}
+    \tilde{\mu}_p = \frac{\sqrt{\bar{\alpha}_{t-1}}\beta_t}{1-\bar{\alpha}_t}\hat{X}_{\theta} + \frac{\sqrt{\alpha_t}(1-\bar{\alpha}_{t-1})}{1-\bar{\alpha}_t}X_t
+\end{equation}
+Where $\hat{X}_{\theta}$ is our estimate of $X_0$ (notice the relation to \cref{eq:forward-process-distribution}).
+
+Combining both \cref{eq:kl-divergence}, \cref{eq:forward-process-distribution}, and \cref{eq:estimated-mean} then gives us the final loss term for use in training.
+\begin{equation}
+    \mathcal{L}_{t-1} = \frac{1}{2\tilde{\beta}_t} \frac{\bar{\alpha}_{t-1}\cdot \beta_t^2}{(1-\bar{\alpha}_t)^2}\cdot \mathbb{E}_{q(X_t|X_0)}\left[ || \hat{X}_{\theta}(X_t, t)- X_0 ||_2^2 \right]
+\end{equation}
+This model will ensure that the estimated data point will have the highest likelihood of being from the same distribution as the target, which will give the best possible estimations.
+\newpage
+\bibliography{sample}
+
+\end{document}

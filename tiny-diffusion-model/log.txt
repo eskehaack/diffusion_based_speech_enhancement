@@ -1,0 +1,161 @@
+[2025-08-18 17:39:24,396][HYDRA] Hydra 1.3.2
+[2025-08-18 17:39:24,396][HYDRA] ===========
+[2025-08-18 17:39:24,396][HYDRA] Installed Hydra Plugins
+[2025-08-18 17:39:24,396][HYDRA] ***********************
+[2025-08-18 17:39:24,396][HYDRA] 	ConfigSource:
+[2025-08-18 17:39:24,396][HYDRA] 	-------------
+[2025-08-18 17:39:24,396][HYDRA] 		FileConfigSource
+[2025-08-18 17:39:24,396][HYDRA] 		ImportlibResourcesConfigSource
+[2025-08-18 17:39:24,396][HYDRA] 		StructuredConfigSource
+[2025-08-18 17:39:24,396][HYDRA] 	CompletionPlugin:
+[2025-08-18 17:39:24,396][HYDRA] 	-----------------
+[2025-08-18 17:39:24,396][HYDRA] 		BashCompletion
+[2025-08-18 17:39:24,396][HYDRA] 		FishCompletion
+[2025-08-18 17:39:24,396][HYDRA] 		ZshCompletion
+[2025-08-18 17:39:24,396][HYDRA] 	Launcher:
+[2025-08-18 17:39:24,396][HYDRA] 	---------
+[2025-08-18 17:39:24,396][HYDRA] 		BasicLauncher
+[2025-08-18 17:39:24,396][HYDRA] 	Sweeper:
+[2025-08-18 17:39:24,396][HYDRA] 	--------
+[2025-08-18 17:39:24,396][HYDRA] 		BasicSweeper
+[2025-08-18 17:39:24,396][HYDRA] 
+[2025-08-18 17:39:24,396][HYDRA] Config search path
+[2025-08-18 17:39:24,396][HYDRA] ******************
+[2025-08-18 17:39:24,463][HYDRA] | Provider | Search path                                                                                                          |
+[2025-08-18 17:39:24,463][HYDRA] -----------------------------------------------------------------------------------------------------------------------------------
+[2025-08-18 17:39:24,463][HYDRA] | hydra    | pkg://hydra.conf                                                                                                     |
+[2025-08-18 17:39:24,465][HYDRA] | main     | file://C:\Users\eskeh\OneDrive\Desktop\Gamle kurser\9. semester\speech_diffusion\tiny-tiny-diffusion\ddpm\train_conf |
+[2025-08-18 17:39:24,465][HYDRA] | schema   | structured://                                                                                                        |
+[2025-08-18 17:39:24,465][HYDRA] -----------------------------------------------------------------------------------------------------------------------------------
+[2025-08-18 17:39:24,503][HYDRA] 
+[2025-08-18 17:39:24,503][HYDRA] Defaults Tree
+[2025-08-18 17:39:24,503][HYDRA] *************
+[2025-08-18 17:39:24,503][HYDRA] <root>:
+[2025-08-18 17:39:24,503][HYDRA]   hydra/config:
+[2025-08-18 17:39:24,503][HYDRA]     hydra/output: default
+[2025-08-18 17:39:24,503][HYDRA]     hydra/launcher: basic
+[2025-08-18 17:39:24,503][HYDRA]     hydra/sweeper: basic
+[2025-08-18 17:39:24,503][HYDRA]     hydra/help: default
+[2025-08-18 17:39:24,503][HYDRA]     hydra/hydra_help: default
+[2025-08-18 17:39:24,503][HYDRA]     hydra/hydra_logging: default
+[2025-08-18 17:39:24,503][HYDRA]     hydra/job_logging: default
+[2025-08-18 17:39:24,503][HYDRA]     hydra/callbacks: null
+[2025-08-18 17:39:24,503][HYDRA]     hydra/env: default
+[2025-08-18 17:39:24,503][HYDRA]     _self_
+[2025-08-18 17:39:24,503][HYDRA]   example
+[2025-08-18 17:39:24,536][HYDRA] 
+[2025-08-18 17:39:24,536][HYDRA] Defaults List
+[2025-08-18 17:39:24,536][HYDRA] *************
+[2025-08-18 17:39:24,536][HYDRA] | Config path                 | Package             | _self_ | Parent       | 
+[2025-08-18 17:39:24,538][HYDRA] ------------------------------------------------------------------------------
+[2025-08-18 17:39:24,538][HYDRA] | hydra/output/default        | hydra               | False  | hydra/config |
+[2025-08-18 17:39:24,538][HYDRA] | hydra/launcher/basic        | hydra.launcher      | False  | hydra/config |
+[2025-08-18 17:39:24,538][HYDRA] | hydra/sweeper/basic         | hydra.sweeper       | False  | hydra/config |
+[2025-08-18 17:39:24,538][HYDRA] | hydra/help/default          | hydra.help          | False  | hydra/config |
+[2025-08-18 17:39:24,538][HYDRA] | hydra/hydra_help/default    | hydra.hydra_help    | False  | hydra/config |
+[2025-08-18 17:39:24,538][HYDRA] | hydra/hydra_logging/default | hydra.hydra_logging | False  | hydra/config |
+[2025-08-18 17:39:24,538][HYDRA] | hydra/job_logging/default   | hydra.job_logging   | False  | hydra/config |
+[2025-08-18 17:39:24,538][HYDRA] | hydra/env/default           | hydra.env           | False  | hydra/config |
+[2025-08-18 17:39:24,538][HYDRA] | hydra/config                | hydra               | True   | <root>       |
+[2025-08-18 17:39:24,538][HYDRA] | example                     |                     | False  | <root>       |
+[2025-08-18 17:39:24,538][HYDRA] ------------------------------------------------------------------------------
+[2025-08-18 17:39:24,597][HYDRA] Config
+[2025-08-18 17:39:24,597][HYDRA] ******
+[2025-08-18 17:39:24,599][HYDRA] seed: 0
+num_epochs: 1000
+dataset:
+  _target_: ddpm.get_sound_dataset
+  data_size: 8000
+  csv_file: ../sgmse/data/train/clean/p234_001.wav
+dataloader:
+  _target_: torch.utils.data.DataLoader
+  batch_size: 64
+  shuffle: true
+  drop_last: true
+model:
+  _target_: ddpm.MLP
+  dim_hidden: 64
+  num_hidden_layers: 2
+noise_scheduler:
+  _target_: ddpm.NoiseScheduler
+  beta_start: 1.0e-05
+  beta_end: 0.01
+  num_timesteps: 50
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 0.001
+
+[2025-08-18 17:39:24,740][matplotlib][DEBUG] - matplotlib data path: C:\Users\eskeh\OneDrive\Desktop\Gamle kurser\9. semester\speech_diffusion\sgmse\.venv\Lib\site-packages\matplotlib\mpl-data
+[2025-08-18 17:39:24,740][matplotlib][DEBUG] - CONFIGDIR=C:\Users\eskeh\.matplotlib
+[2025-08-18 17:39:24,740][matplotlib][DEBUG] - interactive is False
+[2025-08-18 17:39:24,740][matplotlib][DEBUG] - platform is win32
+[2025-08-18 17:39:24,804][matplotlib][DEBUG] - CACHEDIR=C:\Users\eskeh\.matplotlib
+[2025-08-18 17:39:24,804][matplotlib.font_manager][DEBUG] - Using fontManager instance from C:\Users\eskeh\.matplotlib\fontlist-v390.json
+[2025-08-18 17:39:25,518][torio._extension.utils][DEBUG] - Loading FFmpeg6
+[2025-08-18 17:39:25,520][torio._extension.utils][DEBUG] - Failed to load FFmpeg6 extension.
+Traceback (most recent call last):
+  File "C:\Users\eskeh\OneDrive\Desktop\Gamle kurser\9. semester\speech_diffusion\sgmse\.venv\Lib\site-packages\torio\_extension\utils.py", line 116, in _find_ffmpeg_extension
+    ext = _find_versionsed_ffmpeg_extension(ffmpeg_ver)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\eskeh\OneDrive\Desktop\Gamle kurser\9. semester\speech_diffusion\sgmse\.venv\Lib\site-packages\torio\_extension\utils.py", line 108, in _find_versionsed_ffmpeg_extension
+    _load_lib(lib)
+  File "C:\Users\eskeh\OneDrive\Desktop\Gamle kurser\9. semester\speech_diffusion\sgmse\.venv\Lib\site-packages\torio\_extension\utils.py", line 94, in _load_lib
+    torch.ops.load_library(path)
+  File "C:\Users\eskeh\OneDrive\Desktop\Gamle kurser\9. semester\speech_diffusion\sgmse\.venv\Lib\site-packages\torch\_ops.py", line 1478, in load_library
+    ctypes.CDLL(path)
+  File "C:\Users\eskeh\AppData\Local\Programs\Python\Python311\Lib\ctypes\__init__.py", line 376, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: Could not find module 'C:\Users\eskeh\OneDrive\Desktop\Gamle kurser\9. semester\speech_diffusion\sgmse\.venv\Lib\site-packages\torio\lib\libtorio_ffmpeg6.pyd' (or one of its dependencies). Try using the full path with constructor syntax.
+[2025-08-18 17:39:25,547][torio._extension.utils][DEBUG] - Loading FFmpeg5
+[2025-08-18 17:39:25,547][torio._extension.utils][DEBUG] - Failed to load FFmpeg5 extension.
+Traceback (most recent call last):
+  File "C:\Users\eskeh\OneDrive\Desktop\Gamle kurser\9. semester\speech_diffusion\sgmse\.venv\Lib\site-packages\torio\_extension\utils.py", line 116, in _find_ffmpeg_extension
+    ext = _find_versionsed_ffmpeg_extension(ffmpeg_ver)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\eskeh\OneDrive\Desktop\Gamle kurser\9. semester\speech_diffusion\sgmse\.venv\Lib\site-packages\torio\_extension\utils.py", line 108, in _find_versionsed_ffmpeg_extension
+    _load_lib(lib)
+  File "C:\Users\eskeh\OneDrive\Desktop\Gamle kurser\9. semester\speech_diffusion\sgmse\.venv\Lib\site-packages\torio\_extension\utils.py", line 94, in _load_lib
+    torch.ops.load_library(path)
+  File "C:\Users\eskeh\OneDrive\Desktop\Gamle kurser\9. semester\speech_diffusion\sgmse\.venv\Lib\site-packages\torch\_ops.py", line 1478, in load_library
+    ctypes.CDLL(path)
+  File "C:\Users\eskeh\AppData\Local\Programs\Python\Python311\Lib\ctypes\__init__.py", line 376, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: Could not find module 'C:\Users\eskeh\OneDrive\Desktop\Gamle kurser\9. semester\speech_diffusion\sgmse\.venv\Lib\site-packages\torio\lib\libtorio_ffmpeg5.pyd' (or one of its dependencies). Try using the full path with constructor syntax.
+[2025-08-18 17:39:25,563][torio._extension.utils][DEBUG] - Loading FFmpeg4
+[2025-08-18 17:39:25,563][torio._extension.utils][DEBUG] - Failed to load FFmpeg4 extension.
+Traceback (most recent call last):
+  File "C:\Users\eskeh\OneDrive\Desktop\Gamle kurser\9. semester\speech_diffusion\sgmse\.venv\Lib\site-packages\torio\_extension\utils.py", line 116, in _find_ffmpeg_extension
+    ext = _find_versionsed_ffmpeg_extension(ffmpeg_ver)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\eskeh\OneDrive\Desktop\Gamle kurser\9. semester\speech_diffusion\sgmse\.venv\Lib\site-packages\torio\_extension\utils.py", line 108, in _find_versionsed_ffmpeg_extension
+    _load_lib(lib)
+  File "C:\Users\eskeh\OneDrive\Desktop\Gamle kurser\9. semester\speech_diffusion\sgmse\.venv\Lib\site-packages\torio\_extension\utils.py", line 94, in _load_lib
+    torch.ops.load_library(path)
+  File "C:\Users\eskeh\OneDrive\Desktop\Gamle kurser\9. semester\speech_diffusion\sgmse\.venv\Lib\site-packages\torch\_ops.py", line 1478, in load_library
+    ctypes.CDLL(path)
+  File "C:\Users\eskeh\AppData\Local\Programs\Python\Python311\Lib\ctypes\__init__.py", line 376, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: Could not find module 'C:\Users\eskeh\OneDrive\Desktop\Gamle kurser\9. semester\speech_diffusion\sgmse\.venv\Lib\site-packages\torio\lib\libtorio_ffmpeg4.pyd' (or one of its dependencies). Try using the full path with constructor syntax.
+[2025-08-18 17:39:25,563][torio._extension.utils][DEBUG] - Loading FFmpeg
+[2025-08-18 17:39:25,563][torio._extension.utils][DEBUG] - Failed to load FFmpeg extension.
+Traceback (most recent call last):
+  File "C:\Users\eskeh\OneDrive\Desktop\Gamle kurser\9. semester\speech_diffusion\sgmse\.venv\Lib\site-packages\torio\_extension\utils.py", line 116, in _find_ffmpeg_extension
+    ext = _find_versionsed_ffmpeg_extension(ffmpeg_ver)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\eskeh\OneDrive\Desktop\Gamle kurser\9. semester\speech_diffusion\sgmse\.venv\Lib\site-packages\torio\_extension\utils.py", line 106, in _find_versionsed_ffmpeg_extension
+    raise RuntimeError(f"FFmpeg{version} extension is not available.")
+RuntimeError: FFmpeg extension is not available.
+Error executing job with overrides: []
+AAAAAAAAAAAAAAAAHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH 
+
+ 
+ 
+
+Error locating target 'ddpm.get_sound_dataset', set env var HYDRA_FULL_ERROR=1 to see chained exception.
+full_key: dataset
+
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
