@@ -2,7 +2,7 @@ from .mlp import MLP
 from .noise_scheduler import NoiseScheduler
 from .utils import (
     denoise,
-    get_sound_dataset,
+    SoundDataset,
     get_dataset,
     reconstruct,
     viz_sample,
@@ -12,7 +12,7 @@ from .utils import (
 __all__ = [
     "MLP",
     "get_dataset",
-    "get_sound_dataset",
+    "SoundDataset",
     "reconstruct",
     "viz_sample",
     "viz_samples",

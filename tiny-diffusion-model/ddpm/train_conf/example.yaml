@@ -2,15 +2,14 @@ seed: 0
 num_epochs: 1000
 
 dataset:
-  _target_: ddpm.get_sound_dataset
-  data_size: 5980
-  csv_file: .\data\01\0_01_0.wav
+  _target_: ddpm.SoundDataset
+  directory: .\data
+  max_length: 1000
 
 dataloader:
   _target_: torch.utils.data.DataLoader
-  batch_size: 64
+  batch_size: 8
   shuffle: true
-  drop_last: true
 
 model:
   _target_: ddpm.MLP

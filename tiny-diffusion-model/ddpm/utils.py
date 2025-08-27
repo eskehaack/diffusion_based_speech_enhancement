@@ -6,7 +6,7 @@ import pandas as pd
 import torch
 import yaml
 from matplotlib.widgets import Slider
-from torch.utils.data import TensorDataset
+from torch.utils.data import Dataset, TensorDataset
 
 from scipy.io import wavfile
 
@@ -14,15 +14,33 @@ from .mlp import MLP
 from .noise_scheduler import NoiseScheduler
 
 
-def get_sound_dataset(
-    data_size: int = 8000, csv_file: Path = r".\data\01\0_01_0.wav", noise: float = 0.1
-) -> TensorDataset:
-    desired_sampling_rate = 8_000
-    sr, aud = wavfile.read(csv_file)
-    aud = aud[:: int(sr / desired_sampling_rate)]
-    x = np.array(range(len(aud)))
-    X = np.stack((x, aud), axis=1)
-    return TensorDataset(torch.from_numpy(X.astype(np.float32)))
+class SoundDataset(Dataset):
+    def __init__(
+        self, directory, desired_sampling_rate=8000, max_length=None, transform=None
+    ):
+        self.files = list(Path(directory).rglob("*.wav"))
+        self.sr = desired_sampling_rate
+        self.max_length = max_length
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.files)
+
+    def __getitem__(self, idx):
+        file = self.files[idx]
+        sr, aud = wavfile.read(file)
+        aud = aud[:: int(sr / self.sr)]
+        if self.max_length:
+            # Pad or truncate
+            if len(aud) < self.max_length:
+                aud = np.pad(aud, (0, self.max_length - len(aud)))
+            else:
+                aud = aud[: self.max_length]
+        x = np.arange(len(aud))
+        X = np.stack((x, aud), axis=1).astype(np.float32)
+        if self.transform:
+            X = self.transform(X)
+        return torch.from_numpy(X)
 
 
 def get_dataset(
