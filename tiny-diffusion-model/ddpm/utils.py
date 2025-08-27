@@ -4,21 +4,25 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
-import torchaudio
 import yaml
 from matplotlib.widgets import Slider
 from torch.utils.data import TensorDataset
 
+from scipy.io import wavfile
+
 from .mlp import MLP
 from .noise_scheduler import NoiseScheduler
 
-print("AAAAAAAAAAAAAAAAHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH \n \n \n")
 
-
-def get_sound_dataset(file: Path) -> TensorDataset:
-    aud = torchaudio.load(file)
-    print(aud)
-    return TensorDataset(aud)
+def get_sound_dataset(
+    data_size: int = 8000, csv_file: Path = r".\data\01\0_01_0.wav", noise: float = 0.1
+) -> TensorDataset:
+    desired_sampling_rate = 8_000
+    sr, aud = wavfile.read(csv_file)
+    aud = aud[:: int(sr / desired_sampling_rate)]
+    x = np.array(range(len(aud)))
+    X = np.stack((x, aud), axis=1)
+    return TensorDataset(torch.from_numpy(X.astype(np.float32)))
 
 
 def get_dataset(

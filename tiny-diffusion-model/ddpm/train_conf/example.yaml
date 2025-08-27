@@ -3,8 +3,8 @@ num_epochs: 1000
 
 dataset:
   _target_: ddpm.get_sound_dataset
-  data_size: 8000
-  csv_file: ../sgmse/data/train/clean/p234_001.wav
+  data_size: 5980
+  csv_file: .\data\01\0_01_0.wav
 
 dataloader:
   _target_: torch.utils.data.DataLoader
