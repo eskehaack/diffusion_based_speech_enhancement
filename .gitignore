@@ -340,6 +340,6 @@ $RECYCLE.BIN/
 # Data set
 tiny-diffusion-model/data/*
 
-tiny-diffusion-model/learning-results/*
+tiny-diffusion-model/learning_results/*
 **/latex_pdf/
 sandbox.ipynb
