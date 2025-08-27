@@ -341,3 +341,5 @@ $RECYCLE.BIN/
 tiny-diffusion-model/data/*
 
 tiny-diffusion-model/learning-results/*
+**/latex_pdf/
+sandbox.ipynb
