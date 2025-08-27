@@ -36,8 +36,7 @@ class SoundDataset(Dataset):
                 aud = np.pad(aud, (0, self.max_length - len(aud)))
             else:
                 aud = aud[: self.max_length]
-        x = np.arange(len(aud))
-        X = np.stack((x, aud), axis=1).astype(np.float32)
+        X = np.array(aud).astype(np.float32)
         if self.transform:
             X = self.transform(X)
         return torch.from_numpy(X)
