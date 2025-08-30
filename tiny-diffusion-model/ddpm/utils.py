@@ -16,30 +16,38 @@ from .noise_scheduler import NoiseScheduler
 
 class SoundDataset(Dataset):
     def __init__(
-        self, directory, desired_sampling_rate=8000, max_length=None, transform=None
+        self, directory, desired_sampling_rate=8000, max_length=None, audio_length=8000
     ):
         self.files = list(Path(directory).rglob("*.wav"))
         self.sr = desired_sampling_rate
         self.max_length = max_length
-        self.transform = transform
+        self.audio_length = audio_length
+
+        self._preprocess()
 
     def __len__(self):
-        return len(self.files)
+        return self.X.shape[0]
 
     def __getitem__(self, idx):
-        file = self.files[idx]
-        sr, aud = wavfile.read(file)
-        aud = aud[:: int(sr / self.sr)]
-        if self.max_length:
-            # Pad or truncate
-            if len(aud) < self.max_length:
-                aud = np.pad(aud, (0, self.max_length - len(aud)))
+        return self.X[idx]
+
+    def _preprocess(self):
+        batch = []
+        for i, file in enumerate(self.files):
+            # Set max limit of files
+            if i >= self.max_length:
+                break
+
+            sr, aud = wavfile.read(file)
+            aud = aud[:: int(sr / self.sr)]
+            if len(aud) < 8000:
+                aud = np.pad(aud, (0, self.audio_length - len(aud)))
             else:
-                aud = aud[: self.max_length]
-        X = np.array(aud).astype(np.float32)
-        if self.transform:
-            X = self.transform(X)
-        return torch.from_numpy(X)
+                aud = aud[: self.audio_length]
+            X = np.array(aud).astype(np.float32)
+            batch.append(X)
+
+        self.X = torch.stack([torch.from_numpy(x) for x in batch])
 
 
 def get_dataset(
