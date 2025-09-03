@@ -7,6 +7,8 @@ from torch.utils.data import random_split
 from hydra.utils import call
 from tqdm import tqdm
 
+import matplotlib.pyplot as plt
+
 
 @hydra.main(
     version_base=None,
@@ -32,24 +34,33 @@ def main(cfg) -> None:
     else:
         dataloader = call(cfg.dataloader, dataset)
 
-    ns = call(cfg.noise_scheduler)
-    model = call(cfg.model)
-    model = model.to(device)
+    ns = call(cfg.noise_scheduler, device=device)
+    model = call(cfg.model).to(device)
     optimizer = call(cfg.optimizer, model.parameters())
-    criterion = torch.nn.MSELoss(reduction="mean")
+    criterion = call(cfg.criterion)
     test_loss = 0
-
+    losses = []
     # training
     with tqdm(total=cfg.num_epochs * len(dataloader)) as pbar:
         for _ in range(cfg.num_epochs):
             model.train()
             for batch in dataloader:
+                # Move data to device ('cuda' or 'cpu')
                 batch = batch.to(device)
-                t = torch.randint(0, ns.num_timesteps, (1,))[0].to(device)
-                epsilon_target = torch.randn(batch.shape).to(device)  # noise
+                # Sample number of timesteps and move to device
+                t = torch.randint(0, ns.num_timesteps, (batch.shape[0],)).to(device)
+                # Create noise sample.
+                # This is added to the input data and the model will try to predict it.
+                epsilon_target = torch.randn(batch.shape).to(device)
+                # Now run the noise scheduler to add the noise sample to the input data
+                # This is done with itterative steps (remember the markov chain)
                 x_t_plus_1 = ns.add_noise(batch, epsilon_target, t)  # x_{t+1}
-                epsilon_pred = model(x_t_plus_1, t)  # predicted noise
-                loss = criterion(epsilon_pred, epsilon_target)
+                # Run model to predict noisy distribution
+                # Adding t to the data to show the model what timestep we're currently on
+                mean_pred, logvar_pred = model(x_t_plus_1, t)
+                # Calculate loss using the KL divergence (ELBO loss)
+                loss = criterion.get_loss(mean_pred, logvar_pred, epsilon_target)
+                # Usual training steps
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
@@ -64,19 +75,24 @@ def main(cfg) -> None:
                 model.eval()
                 for batch in test_loader:
                     batch = batch.to(device)
-                    t = torch.randint(0, ns.num_timesteps, (1,))[0].to(device)
+                    t = torch.randint(0, ns.num_timesteps, (batch.shape[0],)).to(device)
                     epsilon_target = torch.randn(batch.shape).to(device)  # noise
                     x_t_plus_1 = ns.add_noise(batch, epsilon_target, t)  # x_{t+1}
 
                     with torch.no_grad():
-                        epsilon_pred = model(x_t_plus_1, t)  # predicted noise
-                        loss = criterion(epsilon_pred, epsilon_target)
+                        mean_pred, logvar_pred = model(x_t_plus_1, t)
+                        loss = criterion.get_loss(
+                            mean_pred, logvar_pred, epsilon_target
+                        )
 
                     test_loss += loss.item()
 
                 test_loss /= len(test_loader)
+                losses.append(test_loss)
 
     torch.save(model.state_dict(), log_dir / "params.pt")
+    plt.plot(losses)
+    plt.savefig(log_dir / "loss.png")
     print(f"saving model to {log_dir}")
 
 
