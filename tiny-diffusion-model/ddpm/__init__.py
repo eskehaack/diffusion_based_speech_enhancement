@@ -1,21 +1,12 @@
-from .mlp import MLP
+from .unet import UNet1D
 from .noise_scheduler import NoiseScheduler
-from .utils import (
-    denoise,
-    SoundDataset,
-    get_dataset,
-    reconstruct,
-    viz_sample,
-    viz_samples,
-)
+from .utils import denoise, SoundDataset, reconstruct, KLGaussian
 
 __all__ = [
-    "MLP",
-    "get_dataset",
+    "UNet1D",
     "SoundDataset",
     "reconstruct",
-    "viz_sample",
-    "viz_samples",
     "NoiseScheduler",
     "denoise",
+    "KLGaussian",
 ]
