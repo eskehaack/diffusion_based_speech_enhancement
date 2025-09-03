@@ -1,5 +1,5 @@
 seed: 0
-num_epochs: 5
+num_epochs: 20
 
 dataset:
   _target_: ddpm.SoundDataset
@@ -18,20 +18,23 @@ test:
   seed: 1000101
 
 model:
-  _target_: ddpm.MLP
-  input_dim: 8001
-  dim_hidden: 256
-  num_hidden_layers: 20
+  _target_: ddpm.UNet1D
+  in_channels: 1
+  base_channels: 256
+  num_down: 6
 
 noise_scheduler:
   _target_: ddpm.NoiseScheduler
-  beta_start: 1e-5
-  beta_end: 1e-2
-  num_timesteps: 50
+  beta_start: 1e-6
+  beta_end: 1e-3
+  num_timesteps: 100
 
 optimizer:
   _target_: torch.optim.Adam
   lr: 1e-5
+
+criterion:
+  _target_: ddpm.KLGaussian
 
 hydra:
   run:
