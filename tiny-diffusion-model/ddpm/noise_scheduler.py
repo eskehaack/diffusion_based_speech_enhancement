@@ -3,7 +3,6 @@ Equations are based on:
 Luo, C. Understanding diffusion models: A unified perspective. arXiv preprint arXiv:2208.11970. 2022.
 """
 
-
 from dataclasses import dataclass
 
 import torch
@@ -15,11 +14,14 @@ class NoiseScheduler:
     beta_start: float = 1e-5
     beta_end: float = 1e-2
     num_timesteps: int = 50
+    device: str = "cuda"
 
     def __post_init__(self) -> None:
         super().__init__()
         # compute parameters
-        self.betas = torch.linspace(self.beta_start, self.beta_end, self.num_timesteps)
+        self.betas = torch.linspace(
+            self.beta_start, self.beta_end, self.num_timesteps
+        ).to(self.device)
         self.alphas = 1 - self.betas
         self.alphas_cumprod = torch.cumprod(self.alphas, axis=0)
         self.alphas_cumprod_prev = nn.functional.pad(
@@ -52,8 +54,8 @@ class NoiseScheduler:
 
         sigma^2 (Eq. 70): (1 - \bar{a}_t)
         """
-        mu = self.coef_noise_mu[t] * x_0
-        sigma = self.coef_noise_sigma[t]
+        mu = self.coef_noise_mu[t].unsqueeze(dim=1) * x_0
+        sigma = self.coef_noise_sigma[t].unsqueeze(dim=1)
         return mu + epsilon * sigma
 
     def remove_noise(
