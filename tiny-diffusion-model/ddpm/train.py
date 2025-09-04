@@ -58,6 +58,7 @@ def main(cfg) -> None:
                 # Run model to predict noisy distribution
                 # Adding t to the data to show the model what timestep we're currently on
                 mean_pred, logvar_pred = model(x_t_plus_1, t)
+                mean_pred, logvar_pred = mean_pred.squeeze(), logvar_pred.squeeze()
                 # Calculate loss using the KL divergence (ELBO loss)
                 loss = criterion.get_loss(mean_pred, logvar_pred, epsilon_target)
                 # Usual training steps
@@ -70,25 +71,27 @@ def main(cfg) -> None:
                 )
                 pbar.update(1)
 
-            if cfg.test.run_test:
-                test_loss = 0
-                model.eval()
-                for batch in test_loader:
-                    batch = batch.to(device)
-                    t = torch.randint(0, ns.num_timesteps, (batch.shape[0],)).to(device)
-                    epsilon_target = torch.randn(batch.shape).to(device)  # noise
-                    x_t_plus_1 = ns.add_noise(batch, epsilon_target, t)  # x_{t+1}
+            # Tests
+            test_loss = 0
+            model.eval()
+            for batch in test_loader:
+                batch = batch.to(device)
+                t = torch.randint(0, ns.num_timesteps, (batch.shape[0],)).to(device)
+                epsilon_target = torch.randn(batch.shape).to(device)  # noise
+                x_t_plus_1 = ns.add_noise(batch, epsilon_target, t)  # x_{t+1}
 
-                    with torch.no_grad():
-                        mean_pred, logvar_pred = model(x_t_plus_1, t)
-                        loss = criterion.get_loss(
-                            mean_pred, logvar_pred, epsilon_target
-                        )
+                with torch.no_grad():
+                    mean_pred, logvar_pred = model(x_t_plus_1, t)
+                    mean_pred, logvar_pred = (
+                        mean_pred.squeeze(),
+                        logvar_pred.squeeze(),
+                    )
+                    loss = criterion.get_loss(mean_pred, logvar_pred, epsilon_target)
 
-                    test_loss += loss.item()
+                test_loss += loss.item()
 
-                test_loss /= len(test_loader)
-                losses.append(test_loss)
+            test_loss /= len(test_loader)
+            losses.append(test_loss)
 
     torch.save(model.state_dict(), log_dir / "params.pt")
     plt.plot(losses)
