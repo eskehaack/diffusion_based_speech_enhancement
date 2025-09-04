@@ -60,6 +60,9 @@ class KLGaussian:
     def get_loss(
         self, mean_pred: float, logvar_pred: float, epsilon_target: torch.Tensor
     ):
+        assert (
+            mean_pred.shape == logvar_pred.shape == epsilon_target.shape
+        ), f"{mean_pred.shape},{logvar_pred.shape},{epsilon_target.shape}"
         return (
             0.5
             * (
@@ -89,12 +92,24 @@ def reconstruct(
 
 
 @torch.no_grad()
-def denoise(log_dir_str: str, eval_data_size: int = 1000) -> list[torch.Tensor]:
-    ns, model = reconstruct(log_dir_str)
+def denoise(log_dir_str: str, noisy_data=np.ndarray) -> list[torch.Tensor]:
+    ns, model = reconstruct(log_dir_str, device="cpu")
     model.eval()
-    x_last = torch.randn(eval_data_size, 2)
+    x_last = torch.tensor(noisy_data.astype(np.float32))
     samples = [x_last]
     for t in reversed(range(ns.num_timesteps)):
-        residual = model(samples[-1], t)
+        t = ns.num_timesteps - 1
+        mean, logvar = model(samples[-1], torch.tensor(t))
+        std = torch.exp(0.5 * logvar)
+        residual = mean + std * torch.randn_like(mean)
         samples.append(ns.remove_noise(samples[-1], residual, t))
     return samples
+
+
+def load_single_audio(file: str) -> np.ndarray:
+    desired_sampling_rate = 8_000
+    sr, aud = wavfile.read(file)
+    aud = aud[:: int(sr / desired_sampling_rate)].astype(np.float64)
+    aud = (aud - aud.mean()) / aud.std()
+    aud = np.pad(aud, (0, 8000 - len(aud)))
+    return aud
