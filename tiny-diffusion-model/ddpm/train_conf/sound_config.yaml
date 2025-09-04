@@ -1,10 +1,10 @@
 seed: 0
-num_epochs: 20
+num_epochs: 40
 
 dataset:
   _target_: ddpm.SoundDataset
   directory: .\data
-  max_length: 1000
+  max_length: 3000
   audio_length: 8000
 
 dataloader:
@@ -20,8 +20,8 @@ test:
 model:
   _target_: ddpm.UNet1D
   in_channels: 1
-  base_channels: 256
-  num_down: 6
+  base_channels: 128
+  num_down: 3
 
 noise_scheduler:
   _target_: ddpm.NoiseScheduler
@@ -31,7 +31,7 @@ noise_scheduler:
 
 optimizer:
   _target_: torch.optim.Adam
-  lr: 1e-5
+  lr: 1e-3
 
 criterion:
   _target_: ddpm.KLGaussian
