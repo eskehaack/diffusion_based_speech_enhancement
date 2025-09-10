@@ -31,7 +31,7 @@ noise_scheduler:
 
 optimizer:
   _target_: torch.optim.Adam
-  lr: 1e-3
+  lr: 1e-5
 
 criterion:
   _target_: ddpm.KLGaussian

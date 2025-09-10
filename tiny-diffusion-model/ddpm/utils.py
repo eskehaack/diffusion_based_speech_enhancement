@@ -109,6 +109,9 @@ def denoise(log_dir_str: str, noisy_data=np.ndarray) -> list[torch.Tensor]:
 def load_single_audio(file: str) -> np.ndarray:
     desired_sampling_rate = 8_000
     sr, aud = wavfile.read(file)
+    aud = np.array(aud)
+    if len(aud.shape) > 1:
+        aud = np.sum(aud, axis=-1)
     aud = aud[:: int(sr / desired_sampling_rate)].astype(np.float64)
     aud = (aud - aud.mean()) / aud.std()
     aud = np.pad(aud, (0, 8000 - len(aud)))

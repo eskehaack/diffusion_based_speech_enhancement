@@ -1,6 +1,6 @@
 """
 Equations are based on:
-Luo, C. Understanding diffusion models: A unified perspective. arXiv preprint arXiv:2208.11970. 2022.
+Haack, Eske (2025). Toward Real-Time Speech Enhancement with Scalable Diffusion Models
 """
 
 from dataclasses import dataclass
@@ -50,9 +50,9 @@ class NoiseScheduler:
         """
         sampling x_t ~ N(mu, sigma^2) with reparameterization trick
 
-        mu (Eq. 70): \sqrt{\bar{a}_t} * x_0
+        mu (Eq. 4): \sqrt{\bar{\alpha}_t} * x_0
 
-        sigma^2 (Eq. 70): (1 - \bar{a}_t)
+        sigma^2 (Eq. 4): (1 - \bar{\alpha}_t)
         """
         mu = self.coef_noise_mu[t].unsqueeze(dim=1) * x_0
         sigma = self.coef_noise_sigma[t].unsqueeze(dim=1)
@@ -64,9 +64,9 @@ class NoiseScheduler:
         """
         sampling x_{t-1} ~ N(mu, sigma^2) with reparameterization trick
 
-        mu (Eq. 125): (1 / \sqrt{a_t}) * x_t - [(1 - a_t) / \sqrt{a_t} / \sqrt{1 - \bar{a}_t}] * \epsilon
+        mu (Eq. 25): (1 / \sqrt{\alpha_t}) * x_t - [(1 - \alpha_t) / \sqrt{\alpha_t} / \sqrt{1 - \bar{\alpha}_t}] * \epsilon
 
-        sigma^2 (Eq. 85): (1 - a_t) * (1 - \bar{a}_{t - 1}) / (1 - \bar{a}_t)
+        sigma^2 (Eq. 25): (1 - \alpha_t) * (1 - \bar{\alpha}_{t - 1}) / (1 - \bar{\alpha}_t)
         """
         mu_x_t = (
             self.coef_denoise_mu_1[t] * x_t - self.coef_denoise_mu_2[t] * epsilon_pred
