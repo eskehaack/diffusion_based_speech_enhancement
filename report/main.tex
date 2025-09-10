@@ -190,6 +190,25 @@ In rough terms, we do this by substituting $\hat{X}_{\theta}$ in \cref{eq:estima
     \tilde{\mu}_p = \sqrt{\frac{1}{\alpha_t}}X_t - \sqrt{\frac{1}{\alpha_t}}\frac{\beta_t}{\sqrt{1-\bar{\alpha}_t}}\epsilon_t, \quad \epsilon_t \sim \mathcal{N}(0,I)
 \end{equation}
 This model will ensure that the estimated data point will have the highest likelihood of being from the same distribution as the target, which will give the best possible estimations.
+
+\section*{The neural network}
+We have now established a mathematical model for the optimal outcome, 
+but as you might realize a part of this optimality comes down to how well we can fit a neural network to match the data and added noise.  
+Both in the general world of diffusion, but especially in signal processing, there is a need for these neural networks to be as small as possible, while still maintaining a high performance.
+Small, in this sense, means that the model should have a short inference-time.
+In signal processing, the need arises when model are transferred to small hardware (hearing-aids, headphones, etc.) where computational costs have a higher price.
+For this reason the machine learning part of the model (the neural network) for this project is a small, and quite simple, U-Net structure with less than a million parameters.
+
+U-Nets are a standard convolutional machine learning structure (see \cite{unet}). 
+The main idea is to downscale the dimensionality of the input data iteratively while expanding the amount of channels.
+This squeezes the data into a long shape rather than a wide. 
+When downscaling is done, the neural network upscales the data until it fits the original shape of the input data.
+This teaches the neural network to understand the data using a much lower dimensionality and enables the neural network to learn how to recreate the input data.
+
+While there isn't much focus on the actual neural network in this report, as it is insignificant for understanding the diffusion process, it is important to realize the effect of the simplicity of the neural network.
+As diffusion models are often rather large (the famous DALL-E 2 has about 3.5 billion parameters), the simplicity of the network used in this project allows for a much faster inference.
+But the faster inference comes at a cost. The performance of the model is capped, and it will not be able to remove enough noise from the sound signal to make it audibly satisfactory.
+
 \newpage
 \bibliography{sample}
 
