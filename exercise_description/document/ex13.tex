@@ -1,0 +1,129 @@
+\documentclass[12pt]{article}    % Specifies the document style.
+\usepackage{amsmath,amsfonts}
+\usepackage{upgreek}
+\usepackage{mleftright}
+\usepackage{outlines}
+\usepackage[a4paper, total={170mm, 260mm}]{geometry}
+\usepackage{hyperref}
+
+\input{commands.tex}
+\setcounter{ExNum}{13}
+
+\begin{document}
+\exheader{Diffusion models} 
+
+\readingmaterial{19.7 - 19.7.2}
+
+The objective of this exercise is to get more familiar with diffusion models for signal processing. We will derive the main computations of the diffusion process, both forward and backward.
+Afterwards we will apply a small U-Net structure to a diffusion process to remove noise from the Audio MNIST data set.
+
+\subsection*{Overview}
+The exercise have the following structure:
+
+TODO
+
+\subsection*{Notation}
+\begin{itemize} 
+  \item $X_t$ is a data point a noise-step $t$, where $X_0$ would be a clean data point and $X_T$ would be complete noise.
+\end{itemize}
+
+
+\exmajor{Diffusion models - Forward process}
+In exercise you will work through the "noising" process in diffusion. 
+We'll derive the necessary expressions for adding noise to data and creating a foundation for removing the noise.
+\exminor
+We will start with a standard formulation of the noising process in diffusion:
+\begin{equation} \label{eq:basic-diffusion}
+    X_t = \sqrt{1-\beta_t} X_{t-1} + \sqrt{\beta_t} \epsilon_t, \quad \epsilon_t \sim \mathcal{N}(0,I)
+\end{equation} 
+Relate this to a markov chain and rewrite the expression to infer $X_t$ directly from $X_0$.
+
+Think about how this adds noise to the data. Is it related to an autoregressive process?
+
+\exminorhard
+In diffusion we often like to relate to denoising rather than noising, for this we will introduce two new variables: $\alpha_t = 1 - \beta$ and $\bar{\alpha}_t = \prod_t = \alpha_t$.
+Use these variables to rewrite the noising process in terms of $\bar{\alpha}_t$ resulting in (eq. 19.59) from the book:
+\begin{equation} \label{eq:forward-process}
+    X_t = \sqrt{\bar{\alpha}_t}X_0+\sqrt{1-\bar{\alpha}_t} \epsilon_t, \quad \epsilon_t \sim \mathcal{N}(0,I)
+\end{equation}
+\textbf{Hint:} is the following true $1-\bar{\alpha}_t = \prod_{n=0}^{t} \beta_n$?
+
+\exmajor{Diffusion models - Reverse process and training}
+
+\exminor
+We will start with the "obvious" way of denoising data, working from the formulations in (eq. 19.56 and 19.57) from the book.
+
+Start by formalizing the denoising process using Bayes theorem:
+\begin{equation}
+  q(X_{t-1}|X_t) = \dots
+\end{equation}
+This gives an analytical solution to the denoising process. 
+By now, you should realize, that this problem does not have an analytical solution.
+Explain why we cannot solve this problem with Bayes theorem.
+
+\textbf{Hint:} Which terms of Bayes theorem are known to us?
+
+\exminor
+We will instead use the model described in (eq. 19.60 and 19.61) in the book, 
+which describes how we can remove noise in an iterative fashion using machine learning.
+To use this model we will need a trained predictive model, and as for all trained models we need a loss function. 
+For this we will use the Evidence Lower Bound (ELBO) (see chapter 12 in the book).
+Using the definition of the ELBO loss and the model described in (eq. 19.60 and 19.61) in the book, we can state the following:
+\begin{equation}
+    \log p_{\theta}(X_0) \geq \mathbb{E}_{q(X_{1:T}|X_0)}\left[ \log \frac{p(X_T) \prod_{t=1}^{T} p_{\theta}(X_{t-1}|X_t)}{\prod_{t=1}^{T} q(X_t|X_{t-1})} \right]
+\end{equation}
+In which $\theta$ describes the parameter space for the trained model.
+
+Show that this expression can be split into the three terms (from eq. 19.64 in the book):
+\begin{equation}
+    \log p_{\theta}(X_0) \geq \underbrace{\mathbb{E}_{q(X_{1}|X_0)} [\log p_{\theta}(X_0|X_1)]}_{\text{reconstruction term}} +\underbrace{\mathbb{E}_{q(X_{T-1:T}|X_0)} \left[ \log \frac{p(X_T)}{q(X_T|X_{0})} \right]}_{\text{prior-matching term}} + \underbrace{\sum_{t=2}^{T}\mathbb{E}_{q(X_{t}|X_0)}\left[\frac{p_{\theta}(X_{t-1}|X_{t})}{q(X_{t-1}|X_{t})} \right]}_{\text{step-wise denoising term}}
+\end{equation}
+
+\exminor
+We can again describe the method using Bayes theorem:
+\begin{equation} \label{eq:bayes-diffusion-denoising}
+    q(X_{t-1}|X_{t}, X_0) = \frac{q(X_{t-1}|X_0)q(X_t|X_{t-1},X_0)}{q(X_t|X_0)}
+\end{equation} 
+But this time all the terms are known. Write out the following:
+\begin{align}
+    q(X_t|X_0) =& \dots \\
+    q(X_{t-1}|X_0) =& \dots \\
+    q(X_t|X_{t-1},X_0) =& \dots
+\end{align}
+\textbf{Hint:} Use the expression from the forward process (eq. 19.59 from the book) and remember that this is a markov chain.
+
+\exminor
+This will allow us to write out the method in terms of a normal distribution. 
+\begin{equation} \label{eq:forward-process-distribution}
+    q(X_{t-1}|X_{t}, X_0) = \mathcal{N}(X_{t-1}| \tilde{\mu}_t(X_t, X_0), \tilde{\beta}_t \mathbf{I})
+\end{equation}
+Use the output of the last exercise to determine the mean and variance of the model:
+\begin{align}
+  \tilde{\mu}_t(X_t, X_0) &= \dots \\
+  \tilde{\beta}_t &= \dots
+\end{align}
+
+\exminorhard
+As you might have noticed, we do not have an estimate of $X_0$, but we need it to calculate the mean, $\tilde{\mu}_t(X_t, X_0)$.
+Again using the expression from the forward pass (eq. 19.59 from the book), rewrite the mean to remove the dependency on $X_0$:
+\begin{equation}
+  \tilde{\mu}_t(X_t) = \dots
+\end{equation}
+
+\textbf{Hint:} See equation 19.71 in the book
+
+\exmajor{Training a diffusion model for speech enhancement}
+
+\exminor 
+Open the file for this exercise and implement the missing lines. 
+The functions should calculate the mean and variance of both the forward and the backward diffusion process.
+
+\exminor
+First, download the data from learn and place it in the `week\_13\_python` folder.
+ 
+Run the model by calling the `train.py` file in the `week\_13\_python` folder. This will start a trining of the diffusion model.
+When the training is done, a folder `learning\_results` will appear and in it there is a timestamped folder with your newly trained model.
+
+Use the python notebook for this exercise to explore the functionality of the model. Train with different parameters and investigate the output.
+
+\end{document}
