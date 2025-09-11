@@ -339,6 +339,7 @@ $RECYCLE.BIN/
 
 # Data set
 tiny-diffusion-model/data/*
+exercise_description/data/*
 
 tiny-diffusion-model/learning_results/*
 **/latex_pdf/
