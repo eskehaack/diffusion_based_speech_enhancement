@@ -70,9 +70,9 @@ Using the rules of the markov chains we can rewrite \cref{eq:basic-diffusion} an
 \begin{equation}
     q(X_{1:T}| X_0) = \prod_{t=1}^{T}q(X_t|X_{t-1})
 \end{equation}
-With this form of the probabilistic changes in the model we can rewrite \cref{eq:basic-diffusion} to infer noise directly from step 0:
+With this form of the probabilistic changes in the model we can rewrite \cref{eq:basic-diffusion} to infer noise directly from step 0 (see \cref{ap:forward-term} for full derivation):
 \begin{equation} \label{eq:forward-process}
-    X_t = \sqrt{\bar{\alpha}_t}X_0+\sqrt{1+\bar{\alpha}_t} \epsilon_t, \quad \epsilon_t \sim \mathcal{N}(0,I)
+    X_t = \sqrt{\bar{\alpha}_t}X_0+\sqrt{1-\bar{\alpha}_t} \epsilon_t, \quad \epsilon_t \sim \mathcal{N}(0,I)
 \end{equation}
 To illustrate the markov chain diffusion process \cref{fig:diffusion-process} shows the output of 100 trails running the diffusion process with $x_0 = 10$ and $\beta = 0.5$ for 100 time-steps.
 In the figure, we see a clear starting point at $X = 20$, from which the sample values are reduced and end with a mean at app. zero and a variance of app. one.
@@ -152,7 +152,7 @@ First we will use our knowledge of markovian processes to determine that:
 \end{equation}
 From here we can use Bayes theorem to calculate the actual distribution.
 \begin{equation} \label{eq:bayes-diffusion-denoising}
-    q(X_{t-1}|X_{t}, X_0) = \frac{q(X_{t-1}|X_0)q(X_t|X_{t-1,X_0})}{q(X_t|X_0)}
+    q(X_{t-1}|X_{t}, X_0) = \frac{q(X_{t-1}|X_0)q(X_t|X_{t-1},X_0)}{q(X_t|X_0)}
 \end{equation}
 Remember the variable we introduced earlier: $\alpha_t$, it describes the reverse noise schedule (the denoising schedule) and is defined as: $\alpha_t = 1- \beta_t$.
 
@@ -160,9 +160,9 @@ Additionally we defined $\bar{\alpha}_t = \prod_{t=1}^{T} \alpha_t$.
 
 As all parts of \cref{eq:bayes-diffusion-denoising} are known we will simply write the following:
 \begin{align}
-    q(X_t|X_0) =& \mathcal{N}(X_t| \sqrt{\bar{\alpha}}X_0, (1-\bar{\alpha}\mathbf{I})) \\
+    q(X_t|X_0) =& \mathcal{N}(X_t| \sqrt{\bar{\alpha}}X_0, (1-\bar{\alpha})\mathbf{I}) \\
     q(X_{t-1}|X_0) =& \mathcal{N}(X_t| \sqrt{\bar{\alpha}_{t-1}}X_0, (1-\bar{\alpha}_{t-1})\mathbf{I})\\
-    q(X_t|X_{t-1,X_0}) =& \mathcal{N}(X_t| \sqrt{1-\beta_t}X_{t-1}, \beta_t \mathbf{I})
+    q(X_t|X_{t-1},X_0) =& \mathcal{N}(X_t| \sqrt{1-\beta_t}X_{t-1}, \beta_t \mathbf{I})
 \end{align}
 Which finally allows us to determine the parameters of the estimated distribution as:
 \begin{equation} \label{eq:forward-process-distribution}
@@ -215,6 +215,39 @@ But the faster inference comes at a cost. The performance of the model is capped
 \newpage
 \appendix
 \section{Derivations}
+
+\subsection{Deriving the forward term} \label{ap:forward-term}
+Start with \cref{eq:basic-diffusion}, but with $1-\alpha = \beta$:
+\begin{equation}
+    X_t = \sqrt{\alpha_t} X_{t-1} + \sqrt{1-\alpha_t} \epsilon_t, \quad \epsilon_t \sim \mathcal{N}(0,I)
+\end{equation}
+Write out a few steps:
+\begin{align}
+    X_1 =& \sqrt{\alpha_1} X_0 + \sqrt{1-\alpha_1} \epsilon_1 \\
+    X_2 =& \sqrt{\alpha_2} X_1 + \sqrt{1-\alpha_2} \epsilon_2
+\end{align}
+substitute $X_1$ in $X_2$:
+\begin{align}
+    X_2 =& \sqrt{\alpha_2} (\sqrt{\alpha_1} X_0 + \sqrt{1-\alpha_1} \epsilon_1) + \sqrt{1-\alpha_2} \epsilon_2 \\
+    =& \sqrt{\alpha_2 \alpha_1} X_0  + \sqrt{\alpha_2(1-\alpha_1)} \epsilon_1 + \sqrt{1-\alpha_2} \epsilon_2
+\end{align}
+By induction, and using the linear property of Gaussians, this gives us:
+\begin{equation}
+    X_t = \sqrt{\bar{\alpha}_t} + \sum_{s=1}^{t}\left( \sqrt{(1 - \alpha_s) \prod_{j=s+1}^{t}\alpha_j} \epsilon_s \right)
+\end{equation}
+Where:
+\begin{equation}
+    \sum_{s=1}^{t}\left((1 - \alpha_s) \prod_{j=s+1}^{t}\alpha_j \right) = 1 - \bar{\alpha}_t
+\end{equation}
+Which again is proven by induction:
+\begin{align}
+    t=1 \text{: }& (1 - \alpha_1) = 1 - \bar{\alpha}_1 \\
+    t=2 \text{: }& (1 - \alpha_1) \alpha_2 + (1 - \alpha_2) = \alpha_2 - \alpha_1 \alpha_2  + 1 - \alpha_2 = 1 - \alpha_1 \alpha_2 =  1 - \bar{\alpha}_2
+\end{align}
+This allows us to write the final term as \cref{eq:forward-process}:
+\begin{equation} 
+    X_t = \sqrt{\bar{\alpha}_t}X_0+\sqrt{1-\bar{\alpha}_t} \epsilon_t, \quad \epsilon_t \sim \mathcal{N}(0,I)
+\end{equation}
 
 \subsection{Deriving the backward term} \label{ap:backward-term}
 Start by isolating $X_0$ in \cref{eq:forward-process}.
