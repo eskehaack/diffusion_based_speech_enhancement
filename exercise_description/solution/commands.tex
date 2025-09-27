@@ -1,0 +1,58 @@
+\setlength\parindent{0pt}
+\setlength{\parskip}{.2cm}
+
+\newcounter{ExNum}
+\newcounter{ExMain}
+\setcounter{ExMain}{0}
+\newcounter{ExMinor}
+\setcounter{ExMinor}{0}
+
+\newcommand{\exmajor}[1]{\stepcounter{ExMain}\setcounter{ExMinor}{0}\subsection*{\arabic{ExNum}.\arabic{ExMain} #1}}
+\newcommand{\exminor}{\stepcounter{ExMinor}\subsubsection*{Exercise \arabic{ExNum}.\arabic{ExMain}.\arabic{ExMinor}}}
+\newcommand{\exminoropt}{\stepcounter{ExMinor}\subsubsection*{Exercise
+    \arabic{ExNum}.\arabic{ExMain}.\arabic{ExMinor} (Optional)}}
+\newcommand{\exminorhard}{\stepcounter{ExMinor}\subsubsection*{Exercise
+    \arabic{ExNum}.\arabic{ExMain}.\arabic{ExMinor} (This is a difficult exercise)}}
+\newcommand{\exminorhardopt}{\stepcounter{ExMinor}\subsubsection*{Exercise
+    \arabic{ExNum}.\arabic{ExMain}.\arabic{ExMinor} (Optional - this is a difficult exercise)}}
+\newcommand{\exthis}{\arabic{ExNum}.\arabic{ExMain}.\arabic{ExMinor}}
+\newcommand{\excode}{\texttt{ex\arabic{ExNum}\_\arabic{ExMain}\_\arabic{ExMinor}}}
+
+\newcommand{\exheader}[1]{\section*{02471 Machine Learning for Signal Processing \\ [5mm] Week \arabic{ExNum}: #1}}
+\newcommand{\exheadersol}[1]{\section*{02471 Machine Learning for Signal Processing\\[5mm] \textit{Solution}\\[5mm] Exercise \arabic{ExNum}: #1}}
+\newcommand{\readingmaterial}[1]{This exercise is based on S. Theodoridis: Machine Learning, A Bayesian and Optimization Perspective 3rd edition,
+section(s) #1.}
+
+\newcommand{\xx}{\mathbf{x}}
+\newcommand{\yy}{\mathbf{y}}
+\newcommand{\Wkm}{W_{k,m}}
+%\newcommand{\ss}{\mathbf{s}}
+\newcommand{\zz}{\mathbf{z}}
+\newcommand{\y}{\bm{y}}
+\newcommand{\x}{\bm{x}}
+\newcommand{\X}{\text{X}}
+\newcommand{\K}{\mathcal{K}}
+\newcommand{\s}{\bm{s}}
+\newcommand{\z}{\bm{z}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\EE}[1]{\mathbb{E}[#1]}
+\newcommand{\E}[1]{\mathbb{E}\mleft[#1\mright]}
+\newcommand{\IP}[2]{\langle #1,#2\rangle}
+\newcommand{\T}{\bm{\theta}}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\def\bo{\begin{outline}[itemize]}
+  \def\eo{\end{outline}}
+\def\bi{\begin{itemize}}
+  \def\ei{\end{itemize}}
+\usepackage{graphicx}
+\usepackage{bm}
+
+% fix spacing before \left(
+% see https://tex.stackexchange.com/questions/2607/spacing-around-left-and-right
+\let\originalleft\left
+\let\originalright\right
+\renewcommand{\left}{\mathopen{}\mathclose\bgroup\originalleft}
+\renewcommand{\right}{\aftergroup\egroup\originalright}
+
+\usepackage{times}

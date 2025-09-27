@@ -1,0 +1,148 @@
+\documentclass[12pt]{article}    % Specifies the document style.
+\usepackage{amsmath,amsfonts}
+\usepackage{upgreek}
+\usepackage{mleftright}
+\usepackage{outlines}
+\usepackage[a4paper, total={170mm, 260mm}]{geometry}
+\usepackage{hyperref}
+
+\input{commands.tex}
+\setcounter{ExNum}{13}
+
+\begin{document}
+\exheadersol{Diffusion models} 
+
+\exmajor{Diffusion models - Forward process}
+\exminor
+The following can be written as a markov chain as the each term is only related to the previous:
+\begin{equation} \label{eq:basic-diffusion}
+    X_t = \sqrt{1-\beta_t} X_{t-1} + \sqrt{\beta_t} \epsilon_t, \quad \epsilon_t \sim \mathcal{N}(0,I)
+\end{equation}
+For the rewrite we need to use a kernel function, and can thus make the solution:
+\begin{equation} \label{eq:markov-diffusion}
+    q(X_t|X_{t-1}) = K(X_t | X_{t-1}, \beta_t)
+\end{equation}
+Where
+\begin{equation}
+  K(x, b) = \sqrt{1-b} x + \sqrt{b} \epsilon, \quad \epsilon \sim \mathcal{N}(0,I)
+\end{equation}
+
+\exminorhard
+Start with equation 1 (from the exercise), but with $1-\alpha = \beta$:
+\begin{equation}
+    X_t = \sqrt{\alpha_t} X_{t-1} + \sqrt{1-\alpha_t} \epsilon_t, \quad \epsilon_t \sim \mathcal{N}(0,I)
+\end{equation}
+Write out a few steps:
+\begin{align}
+    X_1 =& \sqrt{\alpha_1} X_0 + \sqrt{1-\alpha_1} \epsilon_1 \\
+    X_2 =& \sqrt{\alpha_2} X_1 + \sqrt{1-\alpha_2} \epsilon_2
+\end{align}
+substitute $X_1$ in $X_2$:
+\begin{align}
+    X_2 =& \sqrt{\alpha_2} (\sqrt{\alpha_1} X_0 + \sqrt{1-\alpha_1} \epsilon_1) + \sqrt{1-\alpha_2} \epsilon_2 \\
+    =& \sqrt{\alpha_2 \alpha_1} X_0  + \sqrt{\alpha_2(1-\alpha_1)} \epsilon_1 + \sqrt{1-\alpha_2} \epsilon_2
+\end{align}
+By induction, and using the linear property of Gaussians, this gives us:
+\begin{equation}
+    X_t = \sqrt{\bar{\alpha}_t} + \sum_{s=1}^{t}\left( \sqrt{(1 - \alpha_s) \prod_{j=s+1}^{t}\alpha_j} \epsilon_s \right)
+\end{equation}
+Where:
+\begin{equation}
+    \sum_{s=1}^{t}\left((1 - \alpha_s) \prod_{j=s+1}^{t}\alpha_j \right) = 1 - \bar{\alpha}_t
+\end{equation}
+Which again is proven by induction:
+\begin{align}
+    t=1 \text{: }& (1 - \alpha_1) = 1 - \bar{\alpha}_1 \\
+    t=2 \text{: }& (1 - \alpha_1) \alpha_2 + (1 - \alpha_2) = \alpha_2 - \alpha_1 \alpha_2  + 1 - \alpha_2 = 1 - \alpha_1 \alpha_2 =  1 - \bar{\alpha}_2
+\end{align}
+This allows us to write the final term as equation 2 (from the exercise):
+\begin{equation} 
+    X_t = \sqrt{\bar{\alpha}_t}X_0+\sqrt{1-\bar{\alpha}_t} \epsilon_t, \quad \epsilon_t \sim \mathcal{N}(0,I)
+\end{equation}
+
+\exmajor{Diffusion models - Reverse process and training}
+
+\exminor
+The process can be formalized, using Bayes theorem, using the following:
+\begin{equation} \label{eq:denoising-bayes}
+    q(X_{t-1}|X_t) = \frac{q(X_t|X_{t-1}) q(X_{t-1})}{q(X_t)}
+\end{equation}
+While this might seem simple, it will require us to know the distribution, $q(X_0)$, i.e. the distribution of the original data point.
+As there are no evidence suggesting the parameters of this distribution, let alone its type, there is no good way of using the model from equation 1 (from the exercise).
+
+\exminor
+Start with equation 4 (from the exercise).
+From here we would like to split out the terms that affect either $X_0$ or $X_T$ (remember that $\log(a \cdot b) = \log a + \log b$):
+\begin{align}
+    \log p_{\theta}(X_0) \geq& \mathbb{E}_{q(X_{1:T}|X_0)}\left[ \log p(X_T) + \log \prod_{t=1}^{T}p_{\theta}(X_{t-1}|X_t) - \log \prod_{t=1}^{T} q(X_t|X_{t-1}) \right]\\
+    \log p_{\theta}(X_0) \geq&\mathbb{E}_{q(X_{1:T}|X_0)} [\log p_{\theta}(X_0|X_1)] + \\
+    &\quad \mathbb{E}_{q(X_{1:T}|X_0)}\left[ \log p(X_T) + \log \prod_{t=2}^{T}p_{\theta}(X_{t-1}|X_t) - \log \prod_{t=1}^{T} q(X_t|X_{t-1}) \right]\\
+    \log p_{\theta}(X_0) \geq&\mathbb{E}_{q(X_{1:T}|X_0)} \left[ \log \frac{p(X_T)}{q(X_T|X_{T-1})} \right] + \mathbb{E}_{q(X_{1:T}|X_0)} [\log p_{\theta}(X_0|X_1)] +\\
+    &\quad \mathbb{E}_{q(X_{1:T}|X_0)}\left[ \log \prod_{t=2}^{T}p_{\theta}(X_{t-1}|X_t) - \log \prod_{t=1}^{T-1} q(X_t|X_{t-1}) \right]
+\end{align}
+This will allow us to write up the final expression which can also be found as eq. 19.64 in the book:
+\begin{align}
+    \log p_{\theta}(X_0) \geq &\underbrace{\mathbb{E}_{q(X_{1}|X_0)} [\log p_{\theta}(X_0|X_1)]}_{\text{reconstruction term}} +\\
+    &\underbrace{\mathbb{E}_{q(X_{T-1:T}|X_0)} \left[ \log \frac{p(X_T)}{q(X_T|X_{0})} \right]}_{\text{prior-matching term}} + \\
+    &\underbrace{\sum_{t=2}^{T}\mathbb{E}_{q(X_{t}|X_0)}\left[\frac{p_{\theta}(X_{t-1}|X_{t})}{q(X_{t-1}|X_{t})} \right]}_{\text{step-wise denoising term}}
+\end{align}
+
+\exminor
+As all parts of the equation are known we will simply write the following:
+\begin{align}
+    q(X_t|X_0) =& \mathcal{N}(X_t| \sqrt{\bar{\alpha}}X_0, (1-\bar{\alpha})\mathbf{I}) \\
+    q(X_{t-1}|X_0) =& \mathcal{N}(X_t| \sqrt{\bar{\alpha}_{t-1}}X_0, (1-\bar{\alpha}_{t-1})\mathbf{I})\\
+    q(X_t|X_{t-1},X_0) =& \mathcal{N}(X_t| \sqrt{1-\beta_t}X_{t-1}, \beta_t \mathbf{I})
+\end{align}
+
+\exminor
+We can write out the expression as:
+\begin{equation} \label{eq:forward-process-distribution}
+    q(X_{t-1}|X_{t}, X_0) = \mathcal{N}(X_{t-1}| \tilde{\mu}_t(X_t, X_0), \tilde{\beta}_t \mathbf{I})
+\end{equation}
+Where:
+\begin{equation*}
+    \tilde{\mu}_t(X_t, X_0) = \frac{\sqrt{\bar{\alpha}_{t-1}}\beta_t}{1-\bar{\alpha}_t}X_0 + \frac{\sqrt{\alpha_t}(1-\bar{\alpha}_{t-1})}{1-\bar{\alpha}_t}X_t, \quad \tilde{\beta}_t = \frac{1-\bar{\alpha}_{t-1}}{1-\bar{\alpha}_t}\beta_t
+\end{equation*}
+
+\exminorhard
+Start by isolating $X_0$ in equation 19.59 in the book.
+\begin{equation}
+    X_t = \sqrt{\bar{\alpha}_t}X_0 + \sqrt{1-\bar{\alpha}_t}\epsilon_t \Rightarrow X_0 = \frac{1}{\sqrt{\bar{\alpha}_t}}(X_t - \sqrt{1-\bar{\alpha}_t} \epsilon_t)
+\end{equation}
+Then we substitute that into the mean found in exercise 13.2.4.
+\begin{align}
+    \tilde{\mu}_p &= \frac{\sqrt{\bar{\alpha}_{t-1}}\beta_t}{1-\bar{\alpha}_t} \frac{1}{\sqrt{\bar{\alpha}_t}} \left(X_t - \sqrt{1-\bar{\alpha}_t} \epsilon_t \right) + \frac{\sqrt{\alpha_t}(1-\bar{\alpha}_{t-1})}{1-\bar{\alpha}_t}X_t \\
+    &= \frac{\sqrt{\bar{\alpha}_{t-1}}\beta_t}{1-\bar{\alpha}_t} \left( \frac{X_t}{\sqrt{\bar{\alpha}_t}} - \frac{\sqrt{1-\bar{\alpha}_t} \epsilon_t}{\sqrt{\bar{\alpha}_t}} \right) + \frac{\sqrt{\alpha_t}(1-\bar{\alpha}_{t-1})}{1-\bar{\alpha}_t}X_t
+\end{align}
+Then use that:
+\begin{equation}
+    \frac{\sqrt{\bar{\alpha}_{t-1}}}{\sqrt{\bar{\alpha}_t}} = \frac{1}{\sqrt{\alpha_t}}
+\end{equation}
+To get the following:
+\begin{equation}
+    \tilde{\mu}_p = \frac{\beta_t}{(1-\bar{\alpha}_t) \sqrt{\alpha_t}} X_t - \frac{\beta_t \sqrt{1-\bar{\alpha}_t} }{(1-\bar{\alpha}_t) \sqrt{\alpha_t}} \epsilon_t + \frac{\sqrt{\alpha_t}(1-\bar{\alpha}_{t-1})}{1-\bar{\alpha}_t}X_t
+\end{equation}
+Then we collect the $X_t$-terms:
+\begin{equation}
+    \tilde{\mu}_p = \frac{1}{1-\bar{\alpha}_{t}}\left( \frac{\beta_t}{\sqrt{\alpha_t}} + \sqrt{\alpha_t} (1-\bar{\alpha}_{t-1}) \right) X_t - \frac{\beta_t \sqrt{1-\bar{\alpha}_t} }{(1-\bar{\alpha}_t) \sqrt{\alpha_t}} \epsilon_t
+\end{equation}
+Multiply the $X_t$-terms with $1 = \frac{\sqrt{\alpha_t}}{\sqrt{\alpha_t}}$
+\begin{equation}
+    \tilde{\mu}_p = \frac{1}{\sqrt{\alpha_t} (1-\bar{\alpha}_{t})}\left( \beta_t + \alpha_t (1-\bar{\alpha}_{t-1}) \right) X_t - \frac{\beta_t \sqrt{1-\bar{\alpha}_t} }{(1-\bar{\alpha}_t) \sqrt{\alpha_t}} \epsilon_t
+\end{equation}
+Reduce the parentheses:
+\begin{equation}
+    \left( \beta_t + \alpha_t (1-\bar{\alpha}_{t-1}) \right) = \left( 1 - \alpha_t + \alpha_t - \bar{\alpha}_{t-1} \alpha_t \right) = 1 - \alpha_t
+\end{equation}
+And substitute back in:
+\begin{equation}
+    \tilde{\mu}_p = \frac{1}{\sqrt{\alpha_t}} X_t - \frac{\beta_t \sqrt{1-\bar{\alpha}_t} }{(1-\bar{\alpha}_t) \sqrt{\alpha_t}} \epsilon_t
+\end{equation}
+And the final term is:
+\begin{equation}
+    \tilde{\mu}_p = \frac{1}{\sqrt{\alpha_t}} X_t - \frac{1}{\sqrt{\alpha_t}} \frac{\beta_t \sqrt{1-\bar{\alpha}_t} }{(1-\bar{\alpha}_t)} \epsilon_t
+\end{equation}
+
+
+\end{document}
