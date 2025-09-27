@@ -20,13 +20,16 @@ Afterwards we will apply a small U-Net structure to a diffusion process to remov
 \subsection*{Overview}
 The exercise have the following structure:
 
-TODO
+13.1 will take you through the forward process of a diffusion model.
+
+13.2 will have you derive the main mathematical expressions for the reverse process.
+
+13.3 will give you a practical example of a diffusion model.
 
 \subsection*{Notation}
 \begin{itemize} 
   \item $X_t$ is a data point a noise-step $t$, where $X_0$ would be a clean data point and $X_T$ would be complete noise.
 \end{itemize}
-
 
 \exmajor{Diffusion models - Forward process}
 In exercise you will work through the "noising" process in diffusion. 
@@ -46,7 +49,6 @@ Use these variables to rewrite the noising process in terms of $\bar{\alpha}_t$ 
 \begin{equation} \label{eq:forward-process}
     X_t = \sqrt{\bar{\alpha}_t}X_0+\sqrt{1-\bar{\alpha}_t} \epsilon_t, \quad \epsilon_t \sim \mathcal{N}(0,I)
 \end{equation}
-\textbf{Hint:} is the following true $1-\bar{\alpha}_t = \prod_{n=0}^{t} \beta_n$?
 
 \exmajor{Diffusion models - Reverse process and training}
 
@@ -60,8 +62,6 @@ Start by formalizing the denoising process using Bayes theorem:
 This gives an analytical solution to the denoising process. 
 By now, you should realize, that this problem does not have an analytical solution.
 Explain why we cannot solve this problem with Bayes theorem.
-
-\textbf{Hint:} Which terms of Bayes theorem are known to us?
 
 \exminor
 We will instead use the model described in (eq. 19.60 and 19.61) in the book, 
@@ -90,7 +90,6 @@ But this time all the terms are known. Write out the following:
     q(X_{t-1}|X_0) =& \dots \\
     q(X_t|X_{t-1},X_0) =& \dots
 \end{align}
-\textbf{Hint:} Use the expression from the forward process (eq. 19.59 from the book) and remember that this is a markov chain.
 
 \exminor
 This will allow us to write out the method in terms of a normal distribution. 
@@ -110,8 +109,6 @@ Again using the expression from the forward pass (eq. 19.59 from the book), rewr
   \tilde{\mu}_t(X_t) = \dots
 \end{equation}
 
-\textbf{Hint:} See equation 19.71 in the book
-
 \exmajor{Training a diffusion model for speech enhancement}
 
 \exminor 
@@ -125,5 +122,23 @@ Run the model by calling the `train.py` file in the `week\_13\_python` folder. T
 When the training is done, a folder `learning\_results` will appear and in it there is a timestamped folder with your newly trained model.
 
 Use the python notebook for this exercise to explore the functionality of the model. Train with different parameters and investigate the output.
+
+\section*{Hints}
+
+Exercise 13.1.2
+
+Is the following true $1-\bar{\alpha}_t = \prod_{n=0}^{t} \beta_n$?
+
+Exercise 13.2.1
+
+Which terms, from Bayes theorem, are known for this system?
+
+Exercise 13.2.3
+
+Use the expression from the forward process (eq. 19.59 from the book) and remember that this is a markov chain.
+
+Exercise 13.2.5
+
+See equation 19.71 in the book
 
 \end{document}
