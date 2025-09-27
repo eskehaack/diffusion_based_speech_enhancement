@@ -29,6 +29,9 @@
 \RequirePackage{booktabs}
 \RequirePackage{authblk}
 
+\RequirePackage[hidelinks]{hyperref}
+\RequirePackage{cleveref}
+
 \RequirePackage[left=2cm,%
                 right=2cm,%
                 top=2.25cm,%
@@ -202,4 +205,3 @@ THE ABSTRACT\vskip12pt}\let\go\relax\fi
 }
 
 % ---------------------------------
-\usepackage{cleveref}
